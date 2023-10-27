@@ -2,6 +2,11 @@ package prov;
 
 import java.io.IOException;
 
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.ServerEndpoint;
+
 
 
 @ServerEndpoint("/websocket")
@@ -33,7 +38,7 @@ public class ProgProva {
         		metodo="L";
         		for(int i=1;i<message.length();i++) {
         			if(message.charAt(i)=='|') {
-        				user=message.substring(1,i-1);
+        				user=message.substring(1,i);
         				password=message.substring(i+1);
         			}
         		}
