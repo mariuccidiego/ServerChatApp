@@ -1,4 +1,4 @@
-package prov;
+package server;
 
 import java.io.IOException;
 
@@ -10,7 +10,7 @@ import jakarta.websocket.server.ServerEndpoint;
 
 
 @ServerEndpoint("/websocket")
-public class ProgProva {
+public class ChatApp {
 
     @OnOpen
     public void onOpen(Session session) {
