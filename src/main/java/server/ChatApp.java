@@ -29,10 +29,12 @@ public class ChatApp {
     public void onMessage(String message, Session session) {
         // Questo metodo gestisce i messaggi inviati dai client
         try {
-            // Elabora il messaggio del client e invia una risposta
+            //TODO rendere le variabili globali
+        	//LOGIN
         	String metodo = "";
         	String user="";
         	String password="";
+        	Boolean utenteApprovato=false;
         	
         	if(message.charAt(0)=='L') {
         		metodo="L";
@@ -42,13 +44,46 @@ public class ChatApp {
         				password=message.substring(i+1);
         			}
         		}
+        		if(user.equals(password)) {
+            		utenteApprovato=true;
+            		session.getBasicRemote().sendText("accettato ("+user+" "+password+")");
+            	}else{
+            		utenteApprovato=false;
+            		session.getBasicRemote().sendText("rifiutato ("+user+" "+password+")");
+            	}
         	}
         	
-        	if(user.equals(password)) {
-        		session.getBasicRemote().sendText("accettato ("+user+" "+password+")");
-        	}else{
-        		session.getBasicRemote().sendText("rifiutato ("+user+" "+password+")");
+        	//MESSAGE
+        	String nome="";
+        	String id="";
+        	String messaggio="";	
+        	
+        	if(message.charAt(0)=='M') {
+        		metodo="M";
+        		session.getBasicRemote().sendText("M");
+        		for(int i=1;i<message.length();i++) {
+        			if(message.charAt(i)=='|') {
+        				nome=message.substring(1,i);
+        				session.getBasicRemote().sendText("nome="+nome);
+        				for(int j=i;j<message.length();j++) {
+        					if(message.charAt(j)=='|') {
+        						id=message.substring(i+1,j+1);
+        						session.getBasicRemote().sendText("id="+id);
+        						messaggio=message.substring(j);
+        						session.getBasicRemote().sendText("messagio="+message);
+        					}
+        				}
+        				i=message.length();
+        			}
+        		}
+        		if(utenteApprovato) {
+            		session.getBasicRemote().sendText(nome+"("+id+") = "+messaggio);
+            	}else{
+            		session.getBasicRemote().sendText("Fai prima l'accesso!");
+            	}
         	}
+     	
+        	
         	
             String responseMessage = "Server: Hai scritto - " + message;
 
