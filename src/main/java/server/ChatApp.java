@@ -11,7 +11,7 @@ import jakarta.websocket.server.ServerEndpoint;
 
 @ServerEndpoint("/websocket")
 public class ChatApp {
-
+	Boolean utenteApprovato=false;
     @OnOpen
     public void onOpen(Session session) {
         // Questo metodo gestisce la richiesta di apertura della connessione WebSocket
@@ -34,7 +34,7 @@ public class ChatApp {
         	String metodo = "";
         	String user="";
         	String password="";
-        	Boolean utenteApprovato=false;
+        	//Boolean utenteApprovato=false;
         	
         	if(message.charAt(0)=='L') {
         		metodo="L";
@@ -65,11 +65,11 @@ public class ChatApp {
         			if(message.charAt(i)=='|') {
         				nome=message.substring(1,i);
         				session.getBasicRemote().sendText("nome="+nome);
-        				for(int j=i;j<message.length();j++) {
+        				for(int j=i+1;j<message.length();j++) {
         					if(message.charAt(j)=='|') {
-        						id=message.substring(i+1,j+1);
+        						id=message.substring(i+1,j);
         						session.getBasicRemote().sendText("id="+id);
-        						messaggio=message.substring(j);
+        						messaggio=message.substring(j+1);
         						session.getBasicRemote().sendText("messagio="+message);
         					}
         				}
@@ -78,11 +78,16 @@ public class ChatApp {
         		}
         		if(utenteApprovato) {
             		session.getBasicRemote().sendText(nome+"("+id+") = "+messaggio);
+            		for (Session clientSession : session.getOpenSessions()) {
+                        if (clientSession.isOpen()) {
+                            clientSession.getBasicRemote().sendText(messaggio);
+                        }
+                    }
             	}else{
             		session.getBasicRemote().sendText("Fai prima l'accesso!");
             	}
         	}
-     	
+        	
         	
         	
             String responseMessage = "Server: Hai scritto - " + message;
