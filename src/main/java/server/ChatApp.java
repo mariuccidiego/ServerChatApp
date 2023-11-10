@@ -1,3 +1,20 @@
+/*
+ * ChatApp - Applicazione di chat basata su WebSocket
+ * 
+ * Protocollo di Comunicazione:
+ * - Login: Invia il messaggio seguente per effettuare il login: Lnome|password
+ *   - Risposta login accettato: Accettato
+ *   - Risposta login rifiutato: Rifiutato
+ * 
+ * - Messaggio: Invia il messaggio seguente per inviare un messaggio: Mnome|id|messaggio
+ * 
+ * - Utenti Connessi: Ricevi il messaggio seguente per ottenere la lista degli utenti connessi: Euname1|uname2|...|unameN
+ * 
+ * @author Diego Magiucci - Chiara Rosi
+ * @version 1.0
+ * @since 16-11-2023
+ */
+
 package server;
 
 import java.io.IOException;
@@ -11,15 +28,16 @@ import jakarta.websocket.server.ServerEndpoint;
 
 @ServerEndpoint("/websocket")
 public class ChatApp {
+	
 	boolean utenteApprovato=false;
+	// Contiene tutti gli utenti collegati alla chat
 	static ArrayList<Utente> utenti = new ArrayList<>();
-    @OnOpen
+    
+	// Gestisce la connessione con i client
+	@OnOpen
     public void onOpen(Session session) {
-        // Questo metodo gestisce la richiesta di apertura della connessione WebSocket
         System.out.println("WebSocket opened");
         
-
-        // Invia un messaggio di benvenuto al client
         try {
             session.getBasicRemote().sendText("Ciao");
         } catch (IOException e) {
@@ -29,27 +47,26 @@ public class ChatApp {
 
     @OnMessage
     public void onMessage(String message, Session session) {
-        // Questo metodo gestisce i messaggi inviati dai client
-    	
+        
         try {
-            //TODO rendere le variabili globali
-        	//LOGIN
-        	String metodo = "";
-        	String user="";
+        	// LOGIN
+        	String user="-";
         	String password="";
-        	//Boolean utenteApprovato=false;
         	
         	if(message.charAt(0)=='L') {
-        		metodo="L";
+        		
+        		// Divide username e password 
         		for(int i=1;i<message.length();i++) {
         			if(message.charAt(i)=='|') {
         				user=message.substring(1,i);
         				password=message.substring(i+1);
         			}
         		}
+        		
         		if(user.equals(password)) {
             		utenteApprovato=true;
             		session.getBasicRemote().sendText("Accetato");
+            		// Aggiunge l'utente alla lista dei collegati e loggati
             		Utente us = new Utente(session,user);
             		us.setApprovato(true);
                     utenti.add(us);
@@ -60,46 +77,47 @@ public class ChatApp {
             	}
         	}
         	
-        	
+        	// RICEZIONE MESSAGGIO
         	if(message.charAt(0)=='M') {
-        		metodo="M";
-        		session.getBasicRemote().sendText("mess inviato");
         		if(utenteApprovato) {
-        			for (Utente clientSession : utenti) {
-                        if (clientSession.getSession().isOpen() && !clientSession.getSession().equals(session)) {
+        			// Invia a tutti gli utenti collegati al server e loggati il messaggio, tranne a chi lo ha inviato
+        			for (Utente sessione : utenti) {
+                        if (sessione.getSession().isOpen() && !sessione.getSession().equals(session)) {
                             try {
-                                clientSession.getSession().getBasicRemote().sendText(message);
+                                sessione.getSession().getBasicRemote().sendText(message);
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
                         }
                     }
         		}else{
-            		session.getBasicRemote().sendText("Fai prima l'accesso!");
+        			//TODO in caso l'utente non abbia fatto l'accesso prima
+            		//ESEMPIO: session.getBasicRemote().sendText("Fai prima l'accesso!");
             	}
         		
         	}
         	
         	
-        	
-            //String responseMessage = "Server: Hai scritto - " + message;
-
-            // Invia la risposta al client
-            //session.getBasicRemote().sendText(responseMessage);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+    // Funzione per inviare a tutti gli utenti loggati la lista di tutti gli utenti loggati
     public void inviaUsers() {
+    	
+    	// Compone la stringa
     	String risposta="E";
+    	// Rimuove gli utenti che erano loggati ma non sono più connessi
+    	utenti.removeIf(u -> !u.getSession().isOpen());
     	for (Utente us : utenti) {
     		risposta+=us.nome+"|";
     	}
-    	//risposta=risposta.substring(0, risposta.length()-1);
+    	risposta=risposta.substring(0, risposta.length()-1);
     	
-    	for (Utente clientSession : utenti) {
+    	// Invia a tutti la lista
+    	for (Utente sessione : utenti) {
     		try {
-                clientSession.getSession().getBasicRemote().sendText(risposta);
+                sessione.getSession().getBasicRemote().sendText(risposta);
             } catch (IOException e) {
                 e.printStackTrace();
             }
